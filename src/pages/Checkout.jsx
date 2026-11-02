@@ -35,6 +35,7 @@ export default function Checkout() {
   const [errors, setErrors] = useState({})
   const [placing, setPlacing] = useState(false)
   const [online, setOnline] = useState(false)
+  const [upi, setUpi] = useState(false)
   const [form, setForm] = useState({
     first_name: user?.first_name || '', last_name: user?.last_name || '', email: user?.email || '',
     phone: user?.phone || '', address_line1: '', city: '', state: '', landmark: '', pincode: '',
@@ -46,6 +47,7 @@ export default function Checkout() {
     // Real online payment (Razorpay) when the server has keys; otherwise the no-money demo option.
     paymentService.config().then((c) => {
       setOnline(c.online_enabled)
+      setUpi(c.upi_enabled)
       if (c.online_enabled) setForm((f) => (f.payment_method === 'demo_online' ? { ...f, payment_method: 'razorpay' } : f))
     }).catch(() => {})
   }, [])
@@ -174,6 +176,13 @@ export default function Checkout() {
                   <small>Card / UPI / wallet checkout is in demo mode for this submission. No card details are asked for or stored, and no money is charged.</small></span>
               </label>
             )}
+            {upi && (
+              <label className={`pay-option${form.payment_method === 'upi' ? ' is-selected' : ''}`}>
+                <input type="radio" name="payment" value="upi" checked={form.payment_method === 'upi'} onChange={set('payment_method')} />
+                <span><b>UPI</b><br />
+                  <small>Pay with Google Pay, PhonePe, Paytm or any UPI app by scanning a QR code. You’ll enter your UPI reference number on the next page.</small></span>
+              </label>
+            )}
             <label className={`pay-option pay-option--cod${form.payment_method === 'cod' ? ' is-selected' : ''}`}>
               <input type="radio" name="payment" value="cod" checked={form.payment_method === 'cod'} onChange={set('payment_method')} />
               <span>Cash on Delivery</span>
@@ -212,7 +221,7 @@ export default function Checkout() {
           <div className="checkout__buttons">
             <Link to="/cart" className="btn-pill btn-pill--grey">Cancel</Link>
             <button type="submit" className="btn-pill btn-pill--primary" disabled={placing}>
-              {placing ? 'Placing…' : form.payment_method === 'razorpay' ? 'Pay & Order' : 'Order Now'}
+              {placing ? 'Placing…' : form.payment_method === 'razorpay' ? 'Pay & Order' : form.payment_method === 'upi' ? 'Continue to UPI' : 'Order Now'}
             </button>
           </div>
         </section>

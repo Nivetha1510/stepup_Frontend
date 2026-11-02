@@ -3,8 +3,9 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ErrorState, Loader } from '../components/Common'
 import { CartIcon, CheckIcon, ChevronLeft, ThumbIcon, TruckIcon } from '../components/Icons'
 import { useToast } from '../context/ToastContext'
-import { errorMessage } from '../services/api'
-import { orderService } from '../services'
+import { QRCodeSVG } from 'qrcode.react'
+import { errorMessage, fieldErrors } from '../services/api'
+import { orderService, paymentService } from '../services'
 import { expectedDelivery, formatDateTime, rupees } from '../utils/format'
 import { payForOrder } from '../utils/razorpay'
 
@@ -18,6 +19,65 @@ function useOrder(id, initial) {
   }, [id])
   useEffect(() => { load() }, [load])
   return { order, setOrder, error, load }
+}
+
+function UpiPayment({ order, onSubmitted }) {
+  const toast = useToast()
+  const [info, setInfo] = useState(null)
+  const [loadError, setLoadError] = useState('')
+  const [reference, setReference] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    paymentService.upiDetails(order.id).then(setInfo).catch((e) => setLoadError(errorMessage(e)))
+  }, [order.id])
+
+  const copy = () => navigator.clipboard?.writeText(info.upi_id).then(() => toast.show('UPI ID copied'), () => {})
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (saving) return
+    if (reference.trim() && !/^\d{12}$/.test(reference.trim())) return setError('The UPI reference number should be 12 digits.')
+    setError('')
+    setSaving(true)
+    try {
+      onSubmitted(await paymentService.upiReference(order.id, reference.trim()))
+    } catch (err) {
+      setError(fieldErrors(err).reference || errorMessage(err))
+    }
+    setSaving(false)
+  }
+
+  return (
+    <div className="success-card upi-pay">
+      <h1>Pay with UPI</h1>
+      <p>Order #{order.order_number} is saved. Pay {rupees(order.total)} to complete it.</p>
+      {loadError && <p className="field__error" role="alert">{loadError}</p>}
+      {info && (
+        <>
+          <div className="upi-pay__qr"><QRCodeSVG value={info.link} size={200} marginSize={2} /></div>
+          <p className="muted small">Scan with any UPI app, or on your phone tap the button below. Click “I have paid” once the payment is done.</p>
+          <a className="btn-pill btn-pill--outline upi-pay__app" href={info.link}>Open UPI app</a>
+          <p className="upi-pay__id">
+            UPI ID: <b>{info.upi_id}</b> <button type="button" className="chip" onClick={copy}>Copy</button>
+          </p>
+          <form className="upi-pay__form" onSubmit={submit} noValidate>
+            <label className="field">
+              <span className="field__label">UPI reference number (optional)</span>
+              <input value={reference} onChange={(e) => { setReference(e.target.value); setError('') }} inputMode="numeric"
+                maxLength={12} placeholder="12-digit number from your payment app" aria-invalid={Boolean(error)} />
+              {error && <span className="field__error">{error}</span>}
+            </label>
+            <button type="submit" className="btn-pill btn-pill--primary" disabled={saving}>{saving ? 'Submitting…' : 'I have paid'}</button>
+          </form>
+        </>
+      )}
+      <div className="success-card__actions">
+        <Link to={`/account/orders/${order.id}`} className="btn-pill btn-pill--outline">View Order</Link>
+      </div>
+    </div>
+  )
 }
 
 export function OrderSuccess() {
@@ -39,6 +99,10 @@ export function OrderSuccess() {
       toast.show(errorMessage(e), 'error')
     }
     setPaying(false)
+  }
+
+  if (order.payment_method === 'upi' && order.payment_status === 'pending' && order.status !== 'cancelled') {
+    return <UpiPayment order={order} onSubmitted={setOrder} />
   }
 
   if (awaitingPayment) {
@@ -70,6 +134,7 @@ export function OrderSuccess() {
       <h1>Thankyou for your ordering</h1>
       <p>We’ve received your order will ship in 5-7 business days.<br />Your order number is #{order.order_number}</p>
       {order.payment_method === 'demo_online' && <p className="muted small">Demo payment reference: {order.transaction_reference}</p>}
+      {order.payment_method === 'upi' && <p className="muted small">Paid by UPI · Reference: {order.transaction_reference}</p>}
       {order.payment_method === 'razorpay' && <p className="muted small">Paid online · Payment id: {order.transaction_reference}</p>}
       <div className="success-card__actions">
         <Link to={`/account/orders/${order.id}`} className="btn-pill btn-pill--outline">View Order</Link>

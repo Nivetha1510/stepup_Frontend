@@ -62,6 +62,8 @@ export const paymentService = {
   config: () => data(api.get('/payments/config/')),
   start: (orderId) => data(api.post('/payments/start/', { order_id: orderId })),
   verify: (payload) => data(api.post('/payments/verify/', payload)),
+  upiDetails: (orderId) => data(api.get(`/payments/upi/${orderId}/`)),
+  upiReference: (orderId, reference) => data(api.post('/payments/upi/reference/', { order_id: orderId, reference })),
 }
 
 export const wishlistService = {
