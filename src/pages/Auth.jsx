@@ -102,6 +102,11 @@ export default function Auth({ mode = 'login' }) {
   onError={() => {
     toast.show('Google sign-in failed. Please try again.', 'error')
   }}
+  theme="outline"
+  size="large"
+  shape="rectangular"
+  text="signin_with"
+  width="300"
 />
 
 </div>

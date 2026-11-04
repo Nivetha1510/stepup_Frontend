@@ -330,7 +330,8 @@
 .auth__submit { align-self: center; background: var(--primary); color: #fff; border: 0; border-radius: 12px; font-size: 22px; padding: 14px 24px; margin-top: 10px; }
 .auth__submit:hover:not(:disabled) { background: #3d6464; }
 .auth__or { text-align: center; font-size: 26px; font-weight: 700; }
-.auth__google { height: 35px; border: 1px solid #000; background: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 18px; }
+.auth__google { display: flex; justify-content: center; margin-top: 4px; min-height: 44px; color-scheme: light; }
+.auth__google > div { max-width: 100%; }
 .auth__switch { text-align: center; font-size: 18px; margin-top: 14px; }
 .auth__switch button { background: none; border: 0; color: var(--accent-red); font-size: 18px; padding: 0; }
 .auth__hint { font-size: 12px; color: var(--muted); margin-top: -14px; }
