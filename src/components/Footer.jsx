@@ -43,7 +43,7 @@ export default function Footer() {
             <li><Link to="/shop/all?sort=new">New in</Link></li>
             <li><Link to="/shop/womens">Women</Link></li>
             <li><Link to="/shop/mens">Men</Link></li>
-            <li><Link to="/shop/kids">Accessories</Link></li>
+            <li><Link to="/shop/kids">Kids</Link></li>
             <li><Link to="/shop/womens?style=heels">Heels</Link></li>
             <li><Link to="/about">About us</Link></li>
           </ul>
